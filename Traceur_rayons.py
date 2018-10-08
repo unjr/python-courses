@@ -21,7 +21,8 @@ class Dioptre():
             self.diametre = diametre
             self.n_1 = n_1
             self.n_2 = n_2
-            self.z_center = self.z0 + R
+            self.z_center = self.z0
+            self.z_center[2] += R
             
     def __repr__(self):
         return("Centre: "+str(self.z_center)+"\nRayon: "+str(self.R))
@@ -43,9 +44,9 @@ class Dioptre():
         p1 = rayon.p0; k1 = rayon.k
 
         # Calcul du point d'intersection
-        a = k1**2
+        a = np.sum(k1**2)
         b = 2*np.dot(k1,p1-center)
-        c = (p1-center)**2-R**2
+        c = np.sum((p1-center)**2)-R**2
         
         discriminant = b**2-4*a*c
         if discriminant<0:
@@ -91,10 +92,41 @@ class Rayon():
     
 R = 6
 dioptre1 = Dioptre(np.array([0,0,0]),R,1,1.5,10)
-rayon1 = Rayon(np.array([0,0,0]),np.array([1,1,0]))
+rayon = Rayon(np.array([0,0,0]),np.array([1,1,0]))
 rayon2 = dioptre1.traversee(rayon1)
 
 #dioptre1.plot(-R,R)
 #p1x = rayon1.p0[0]; p1y = rayon1.p0[1]
 #p2x = rayon2.p0[0]; p2y = rayon2.p0[1]
 #plot([p1x, p1y] , [p2x, p2y])
+
+z0=np.array([0,0,0])
+z_center = z0
+z_center[2] += R
+center=z_center
+
+class Faisceau(list):
+    def plot(self):
+        nbRayons = len(self)
+        if nbRayons >= 2:
+            x = np.zeros(nbRayons)
+            y = np.zeros(nbRayons)
+            z = np.zeros(nbRayons)
+            for i in range(nbRayons):
+                rayon = self[i]; p = rayon.p0
+                x[i] = p[0]; y[i] = p[1]; z[i] = p[2]
+            for i in range(nbRayons-1):
+                plot([x[i], x[i+1]], [y[i], y[i+1]])
+    
+class SystemeOptique(list):
+    def calcul_faisceau(self,r0):
+        faisceau = Faisceau()
+        faisceau.append(r0)
+        for dioptre in self:
+            faisceau.append(dioptre.traversee(faisceau[-1]))
+        return faisceau
+    def plot(self):
+        for dioptre in self:
+            dioptre.plot()
+
+        
